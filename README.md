@@ -42,7 +42,7 @@ func main() {
 
 ## Contact me
 
-If I can help you, you have an idea or you are using Mergo in your projects, don't hesitate to drop me a line (or a pull request): [@im_dario](https://twitter.com/im_dario)
+If I can help you, you have an idea or you are using Gluo in your projects, don't hesitate to drop me a line (or a pull request): [@im_dario](https://twitter.com/im_dario)
 
 ## About
 
