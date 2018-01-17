@@ -1,33 +1,67 @@
 package gluo
 
 import (
-	"github.com/eawsy/aws-lambda-go-net/service/lambda/runtime/net"
-	"github.com/eawsy/aws-lambda-go-net/service/lambda/runtime/net/apigatewayproxy"
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"net/http"
 	"os"
 )
 
-// EntryPoint is the the exported handler called by AWS Lambda.
-type EntryPoint apigatewayproxy.Handler
-
 func isLambda() bool {
-	if len(os.Args) == 0 {
-		panic("unable to tell if we are running in a lambda or not")
-	}
-	if os.Args[0] == "/usr/bin/python2.7" {
-		return true
-	}
-	return false
+	functionName := os.Getenv("AWS_LAMBDA_FUNCTION_NAME")
+	return functionName != ""
 }
 
-func Init(entryPoint *EntryPoint, handle http.HandlerFunc) {
+type lambdaAdapter struct {
+	http.Handler
+}
+
+func (la lambdaAdapter) Serve(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	rq, err := request(event)
+	rs := events.APIGatewayProxyResponse{}
+	if err != nil {
+		return rs, err
+	}
+	w := response{event: &rs}
+	la.Handler.ServeHTTP(&w, rq)
+	w.finishRequest()
+	return rs, nil
+}
+
+// ListenAndServe calls http.ListenAndServe with handler to handle
+// requests on incoming connections when invoked outside AWS Lambda
+// environment.
+//
+// In AWS Lambda environment it calls lambda.Start with handler to
+// handle requests transparently as if it was working in a non
+// serverless environment. Addr argument is ignored in AWS Lambda.
+//
+// A trivial example is:
+//
+//	package main
+//
+//	import (
+//		"github.com/imdario/gluo"
+//		"net/http"
+//	)
+//
+//	func handler(w http.ResponseWriter, r *http.Request) {
+//		w.Write([]byte("Hello from Gluo"))
+//	}
+//
+//	func main() {
+//		gluo.ListenAndServe(":3000", http.HandlerFunc(handler))
+//	}
+//
+// ListenAndServe always returns a non-nil error. Under AWS Lambda,
+// it always returns nil.
+func ListenAndServe(addr string, handler http.Handler) error {
+	// TODO Handle nil handler as DefaultServeMux
 	if isLambda() {
-		listener := net.Listen()
-		*entryPoint = apigatewayproxy.New(listener, nil).Handle
-		go http.Serve(listener, handle)
+		adapter := lambdaAdapter{handler}
+		lambda.Start(adapter.Serve)
+		return nil
+	} else {
+		return http.ListenAndServe(addr, handler)
 	}
-}
-
-func ListenAndServe(addr string, handle http.HandlerFunc) {
-	http.ListenAndServe(addr, handle)
 }
