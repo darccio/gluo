@@ -61,7 +61,6 @@ func ListenAndServe(addr string, handler http.Handler) error {
 		adapter := lambdaAdapter{handler}
 		lambda.Start(adapter.Serve)
 		return nil
-	} else {
-		return http.ListenAndServe(addr, handler)
 	}
+	return http.ListenAndServe(addr, handler)
 }
