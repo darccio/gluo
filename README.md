@@ -8,11 +8,14 @@ Alpha quality. It needs to be tested out extensively but it seems to work fine.
 
 [![GoDoc][1]][2]
 [![GoCard][3]][4]
+[![Coverage Status][5]][6]
 
 [1]: https://godoc.org/github.com/imdario/gluo?status.svg
 [2]: https://godoc.org/github.com/imdario/gluo
 [3]: https://goreportcard.com/badge/github.com/imdario/gluo
 [4]: https://goreportcard.com/report/github.com/imdario/gluo
+[5]: https://coveralls.io/repos/github/imdario/gluo/badge.svg?branch=master
+[6]: https://coveralls.io/github/imdario/gluo?branch=master
 
 ## Installation
 
