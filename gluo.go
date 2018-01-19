@@ -7,8 +7,8 @@ import (
 	"os"
 )
 
-func isLambda() bool {
-	functionName := os.Getenv("AWS_LAMBDA_FUNCTION_NAME")
+func IsLambda() bool {
+	functionName := os.Getenv("_LAMBDA_SERVER_PORT")
 	return functionName != ""
 }
 
@@ -24,13 +24,15 @@ func (la lambdaAdapter) Serve(event events.APIGatewayProxyRequest) (events.APIGa
 	}
 	w := response{event: &rs}
 	la.Handler.ServeHTTP(&w, rq)
-	w.finishRequest()
+	w.finish()
 	return rs, nil
 }
 
 // ListenAndServe calls http.ListenAndServe with handler to handle
 // requests on incoming connections when invoked outside AWS Lambda
 // environment.
+//
+// If handler is nil, it uses http.DefaultServeMux as default handler.
 //
 // In AWS Lambda environment it calls lambda.Start with handler to
 // handle requests transparently as if it was working in a non
@@ -56,8 +58,10 @@ func (la lambdaAdapter) Serve(event events.APIGatewayProxyRequest) (events.APIGa
 // ListenAndServe always returns a non-nil error. Under AWS Lambda,
 // it always returns nil.
 func ListenAndServe(addr string, handler http.Handler) error {
-	// TODO Handle nil handler as DefaultServeMux
-	if isLambda() {
+	if handler == nil {
+		handler = http.DefaultServeMux
+	}
+	if IsLambda() {
 		adapter := lambdaAdapter{handler}
 		lambda.Start(adapter.Serve)
 		return nil
