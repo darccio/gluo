@@ -37,19 +37,19 @@ func request(event events.APIGatewayProxyRequest) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	rq, err := http.NewRequest(event.HTTPMethod, mustBuildURL(event), body)
+	req, err := http.NewRequest(event.HTTPMethod, mustBuildURL(event), body)
 	if err != nil {
 		return nil, err
 	}
-	rq.Header = http.Header{}
+	req.Header = http.Header{}
 	for name, value := range event.Headers {
-		rq.Header.Add(name, value)
+		req.Header.Add(name, value)
 	}
-	if rq.ContentLength > -1 {
-		rq.Header.Set("Content-Length", strconv.FormatInt(rq.ContentLength, 10))
+	if req.ContentLength > -1 {
+		req.Header.Set("Content-Length", strconv.FormatInt(req.ContentLength, 10))
 	}
-	rq.Header.Set("X-Request-ID", event.RequestContext.RequestID)
-	rq.Header.Set("X-Stage", event.RequestContext.Stage)
-	rq.RemoteAddr = event.RequestContext.Identity.SourceIP
-	return rq, nil
+	req.Header.Set("X-Request-ID", event.RequestContext.RequestID)
+	req.Header.Set("X-Stage", event.RequestContext.Stage)
+	req.RemoteAddr = event.RequestContext.Identity.SourceIP
+	return req, nil
 }

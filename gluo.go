@@ -17,15 +17,17 @@ type lambdaAdapter struct {
 }
 
 func (la lambdaAdapter) Serve(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	rq, err := request(event)
-	rs := events.APIGatewayProxyResponse{}
+	req, err := request(event)
+	res := events.APIGatewayProxyResponse{}
 	if err != nil {
-		return rs, err
+		return res, err
 	}
-	w := response{event: &rs}
-	la.Handler.ServeHTTP(&w, rq)
-	w.finish()
-	return rs, nil
+	w := &response{
+		event: &res,
+	}
+	defer w.finish()
+	la.Handler.ServeHTTP(w, req)
+	return res, nil
 }
 
 // ListenAndServe calls http.ListenAndServe with handler to handle
