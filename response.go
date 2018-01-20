@@ -10,7 +10,7 @@ import (
 )
 
 type response struct {
-	event       *events.APIGatewayProxyResponse
+	event       events.APIGatewayProxyResponse
 	wroteHeader bool
 	header      http.Header
 	buffer      bytes.Buffer
@@ -41,31 +41,33 @@ func (w *response) WriteHeader(code int) {
 	w.event.StatusCode = code
 }
 
-func (w *response) finish() {
+func (w *response) finish() (events.APIGatewayProxyResponse, error) {
 	if !w.wroteHeader {
 		w.WriteHeader(http.StatusOK)
 	}
-	if w.isBinary() {
+	w.event.IsBase64Encoded = w.isBinary()
+	if w.event.IsBase64Encoded {
 		w.event.Body = base64.StdEncoding.EncodeToString(w.buffer.Bytes())
 	} else {
 		w.event.Body = w.buffer.String()
 	}
 	w.event.Headers = make(map[string]string)
-	for name, value := range w.header {
+	for name, value := range w.Header() {
 		if len(value) > 0 {
 			w.event.Headers[name] = value[0]
 		}
 	}
+	return w.event, nil
 }
 
 func (w *response) isBinary() bool {
-	encoding := w.header.Get("Content-Encoding")
+	encoding := w.Header().Get("Content-Encoding")
 	if len(encoding) > 0 && encoding != "identity" {
 		return true
 	}
-	contentType := w.header.Get("Content-Type")
+	contentType := w.Header().Get("Content-Type")
 	if contentType == "" {
-		w.header.Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Type", "application/octet-stream")
 		return true
 	}
 	mimeType, _, err := mime.ParseMediaType(contentType)

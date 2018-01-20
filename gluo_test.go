@@ -1,9 +1,14 @@
 package gluo
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
-	"testing"
+	"fmt"
+	"github.com/aws/aws-lambda-go/events"
+	"net/http"
 	"os"
+	"testing"
 )
 
 func TestMain(m *testing.M) {
@@ -15,5 +20,109 @@ func TestMain(m *testing.M) {
 func TestIsLambda(t *testing.T) {
 	if !IsLambda() {
 		t.Errorf("TestMain failed to set environment to simulate AWS Lambda")
+	}
+}
+
+const testRequest = `{
+    "body":"{\"name\":\"Gluo\"}",
+    "resource":"/{proxy+}",
+    "requestContext":{
+        "resourceId":"123456",
+        "apiId":"1234567890",
+        "resourcePath":"/{proxy+}",
+        "httpMethod":"POST",
+        "requestId":"c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+        "accountId":"123456789012",
+        "identity":{
+            "apiKey":null,
+            "userArn":null,
+            "cognitoAuthenticationType":null,
+            "caller":null,
+            "userAgent":"Custom User Agent String",
+            "user":null,
+            "cognitoIdentityPoolId":null,
+            "cognitoIdentityId":null,
+            "cognitoAuthenticationProvider":null,
+            "sourceIp":"127.0.0.1",
+            "accountId":null
+        },
+        "stage":"prod"
+    },
+    "queryStringParameters":{
+        "foo":"bar"
+    },
+    "headers":{
+        "Via":"1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
+        "Accept-Language":"en-US,en;q=0.8",
+        "CloudFront-Is-Desktop-Viewer":"true",
+        "CloudFront-Is-SmartTV-Viewer":"false",
+        "CloudFront-Is-Mobile-Viewer":"false",
+        "X-Forwarded-For":"127.0.0.1, 127.0.0.2",
+        "CloudFront-Viewer-Country":"US",
+        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Upgrade-Insecure-Requests":"1",
+        "X-Forwarded-Port":"443",
+        "Host":"1234567890.execute-api.us-east-1.amazonaws.com",
+        "X-Forwarded-Proto":"https",
+        "X-Amz-Cf-Id":"cDehVQoZnx43VYQb9j2-nvCh-9z396Uhbp027Y2JvkCPNLmGJHqlaA==",
+        "CloudFront-Is-Tablet-Viewer":"false",
+        "Cache-Control":"max-age=0",
+        "User-Agent":"Custom User Agent String",
+        "CloudFront-Forwarded-Proto":"https",
+        "Accept-Encoding":"gzip, deflate, sdch"
+    },
+    "pathParameters":{
+        "proxy":"path/to/resource"
+    },
+    "httpMethod":"POST",
+    "stageVariables":{
+        "baz":"qux"
+    },
+    "path":"/path/to/resource"
+}`
+
+type helloRequest struct {
+	Name string
+}
+
+func TestLambdaServe(t *testing.T) {
+	la := lambdaAdapter{
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			buffer := new(bytes.Buffer)
+			buffer.ReadFrom(r.Body)
+			r.Body.Close()
+			hr := helloRequest{}
+			err := json.Unmarshal(buffer.Bytes(), &hr)
+			if err != nil {
+				result := fmt.Sprintf("Sorry, I didn't understand you.")
+				w.Write([]byte(result))
+				return
+			}
+			if hr.Name == "" {
+				hr.Name = "stranger"
+			}
+			result := fmt.Sprintf("Hello, %s.", hr.Name)
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(result))
+		}),
+	}
+	req := events.APIGatewayProxyRequest{}
+	json.Unmarshal([]byte(testRequest), &req)
+	res, err := la.Serve(req)
+	if err != nil {
+		t.Error("lambdaHandler.Serve must return nil")
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("expected HTTP status code 200, not '%d'", res.StatusCode)
+	}
+	if res.Body != "Hello, Gluo." {
+		t.Errorf("expected Body 'Hello, Gluo.', not '%s'", res.Body)
+	}
+	if res.IsBase64Encoded {
+		t.Error("unexpected base 64 encoding")
+	}
+	contentType, _ := res.Headers["Content-Type"]
+	if contentType != "application/json" {
+		t.Errorf("expected Content-Type header 'application/json', not '%s'", contentType)
 	}
 }
