@@ -9,7 +9,8 @@ import (
 
 // IsLambda checks if it is running on AWS Lambda.
 func IsLambda() bool {
-	return os.Getenv("_LAMBDA_SERVER_PORT") != ""
+	_, ok := os.LookupEnv("_LAMBDA_SERVER_PORT")
+	return ok
 }
 
 type lambdaAdapter struct {
