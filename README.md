@@ -57,3 +57,8 @@ Written by [Dario Castañé](https://twitter.com/im_dario).
 ## License
 
 [BSD 3-Clause](http://opensource.org/licenses/BSD-3-Clause) license.
+
+## Support on Beerpay
+Hey dude! Help me out for a couple of :beers:!
+
+[![Beerpay](https://beerpay.io/imdario/gluo/badge.svg?style=beer-square)](https://beerpay.io/imdario/gluo)  [![Beerpay](https://beerpay.io/imdario/gluo/make-wish.svg?style=flat-square)](https://beerpay.io/imdario/gluo?focus=wish)
