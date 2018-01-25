@@ -73,7 +73,7 @@ func (w *response) isBinary() bool {
 	if len(encoding) > 0 && encoding != "identity" {
 		return true
 	}
-	contentType := w.Header().Get("Content-Type")
+	contentType := w.getContentType()
 	if contentType == "" {
 		// Content-Type shouldn't be empty but this is a last resort
 		w.Header().Set("Content-Type", "application/octet-stream")
