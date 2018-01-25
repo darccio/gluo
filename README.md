@@ -1,6 +1,8 @@
 # Gluo
 
-Write your HTTP application in Go once, deploy it everywhere (on-premise & AWS Lambda supported)
+Write your HTTP application in Go once, deploy it\* to your servers and AWS Lambda. Really, it's a drop-in replacement for net/http.
+
+*\*: it must be compiled as GOOS=linux.*
 
 ## Status
 
@@ -45,6 +47,10 @@ func main() {
         gluo.ListenAndServe(":3000", http.HandlerFunc(handler))
 }
 ```
+
+## Alternatives
+
+Here are some similar projects, although the
 
 ## Contact me
 
