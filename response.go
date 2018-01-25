@@ -60,6 +60,14 @@ func (w *response) finish() (events.APIGatewayProxyResponse, error) {
 	return w.event, nil
 }
 
+func (w *response) getContentType() string {
+	contentType := w.Header().Get("Content-Type")
+	if contentType == "" {
+		contentType = http.DetectContentType(w.buffer.Bytes())
+	}
+	return contentType
+}
+
 func (w *response) isBinary() bool {
 	encoding := w.Header().Get("Content-Encoding")
 	if len(encoding) > 0 && encoding != "identity" {
@@ -67,6 +75,7 @@ func (w *response) isBinary() bool {
 	}
 	contentType := w.Header().Get("Content-Type")
 	if contentType == "" {
+		// Content-Type shouldn't be empty but this is a last resort
 		w.Header().Set("Content-Type", "application/octet-stream")
 		return true
 	}
