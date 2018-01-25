@@ -2,6 +2,7 @@ package gluo
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -86,7 +87,7 @@ type helloRequest struct {
 }
 
 func TestLambdaServe(t *testing.T) {
-	la := lambdaAdapter{
+	la := LambdaAdapter{
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			buffer := new(bytes.Buffer)
 			buffer.ReadFrom(r.Body)
@@ -108,9 +109,9 @@ func TestLambdaServe(t *testing.T) {
 	}
 	req := events.APIGatewayProxyRequest{}
 	json.Unmarshal([]byte(testRequest), &req)
-	res, err := la.Serve(req)
+	res, err := la.Handle(context.TODO(), req)
 	if err != nil {
-		t.Error("lambdaHandler.Serve must return nil")
+		t.Error("LambdaHandler.Handle must return nil")
 	}
 	if res.StatusCode != 200 {
 		t.Errorf("expected HTTP status code 200, not '%d'", res.StatusCode)
