@@ -47,7 +47,8 @@ const testRequest = `{
             "sourceIp":"127.0.0.1",
             "accountId":null
         },
-        "stage":"prod"
+        "stage":"prod",
+        "X-Amzn-Trace-Id":"Root=1-5759e988-bd862e3fe1be46a994272793;Sampled=1"
     },
     "queryStringParameters":{
         "foo":"bar"
@@ -66,7 +67,6 @@ const testRequest = `{
         "Host":"1234567890.execute-api.us-east-1.amazonaws.com",
         "X-Forwarded-Proto":"https",
         "X-Amz-Cf-Id":"cDehVQoZnx43VYQb9j2-nvCh-9z396Uhbp027Y2JvkCPNLmGJHqlaA==",
-        "X-Amz-Trace-Id":"Root=1-5759e988-bd862e3fe1be46a994272793;Sampled=1",
         "CloudFront-Is-Tablet-Viewer":"false",
         "Cache-Control":"max-age=0",
         "User-Agent":"Custom User Agent String",
@@ -90,6 +90,7 @@ type helloRequest struct {
 func TestLambdaServe(t *testing.T) {
 	la := LambdaAdapter{
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
 			buffer := new(bytes.Buffer)
 			buffer.ReadFrom(r.Body)
 			r.Body.Close()
@@ -104,12 +105,13 @@ func TestLambdaServe(t *testing.T) {
 				hr.Name = "stranger"
 			}
 			result := fmt.Sprintf("Hello, %s.", hr.Name)
-			w.Header().Set("Content-Type", "application/json")
 			w.Write([]byte(result))
 		}),
 	}
 	req := events.APIGatewayProxyRequest{}
-	json.Unmarshal([]byte(testRequest), &req)
+	if err := json.Unmarshal([]byte(testRequest), &req); err != nil {
+		t.Errorf("unexpected error on json.Unmarshal: %v", err)
+	}
 	res, err := la.Handle(context.TODO(), req)
 	if err != nil {
 		t.Error("LambdaHandler.Handle must return nil")
