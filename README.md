@@ -2,7 +2,7 @@
 
 Write your HTTP application in Go once, deploy it\* to your servers and AWS Lambda. Really, it's a drop-in replacement for net/http.
 
-*\*: it must be compiled as* `GOOS=linux` to be deployed in AWS Lambda.
+*\*: it must be compiled as* `GOOS=linux` *to be deployed in AWS Lambda*.
 
 ## Status
 
