@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"io"
 	"net/http"
 	"net/url"
@@ -34,6 +35,23 @@ func getBodyReader(event events.APIGatewayProxyRequest) (io.Reader, error) {
 	return body, nil
 }
 
+// An unexported type to be used as the key for types in this package.
+type contextKey struct{}
+
+// The key for a LambdaContext in Contexts.
+var reqCtxKey = &contextKey{}
+
+// APIGatewayContext returns the APIGatewayProxyRequestContext value stored in ctx.
+func APIGatewayContext(ctx context.Context) (events.APIGatewayProxyRequestContext, bool) {
+	c, ok := ctx.Value(reqCtxKey).(events.APIGatewayProxyRequestContext)
+	return c, ok
+}
+
+// LambdaContext return the LambdaContext value stored in ctx.
+func LambdaContext(ctx context.Context) (*lambdacontext.LambdaContext, bool) {
+	return lambdacontext.FromContext(ctx)
+}
+
 func request(ctx context.Context, event events.APIGatewayProxyRequest) (*http.Request, error) {
 	body, err := getBodyReader(event)
 	if err != nil {
@@ -43,6 +61,7 @@ func request(ctx context.Context, event events.APIGatewayProxyRequest) (*http.Re
 	if err != nil {
 		return nil, err
 	}
+	ctx = context.WithValue(ctx, reqCtxKey, event.RequestContext)
 	req = req.WithContext(ctx)
 	req.Header = http.Header{}
 	for name, value := range event.Headers {
@@ -54,7 +73,7 @@ func request(ctx context.Context, event events.APIGatewayProxyRequest) (*http.Re
 	req.Header.Set("X-Request-ID", event.RequestContext.RequestID)
 	req.Header.Set("X-Stage", event.RequestContext.Stage)
 	// AWS X-Ray
-	if traceID := ctx.Value("X-Amzn-Trace-Id"); traceID != nil {
+	if traceID := ctx.Value("x-amzn-trace-id"); traceID != nil {
 		req.Header.Set("X-Amzn-Trace-Id", fmt.Sprintf("%v", traceID))
 	}
 	req.RemoteAddr = event.RequestContext.Identity.SourceIP

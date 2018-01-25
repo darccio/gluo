@@ -55,7 +55,8 @@ func TestWrongBase64Body(t *testing.T) {
 func TestXRayHeader(t *testing.T) {
 	event := events.APIGatewayProxyRequest{}
 	json.Unmarshal([]byte(testRequest), &event)
-	ctx := context.WithValue(context.Background(), "X-Amzn-Trace-Id", "Root=1-5759e988-bd862e3fe1be46a994272793;Sampled=1")
+	// https://github.com/aws/aws-lambda-go/blob/d050bf32adc65f57141c11e49a34b67610a7c45d/lambda/function.go#L53
+	ctx := context.WithValue(context.Background(), "x-amzn-trace-id", "Root=1-5759e988-bd862e3fe1be46a994272793;Sampled=1")
 	req, err := request(ctx, event)
 	if err != nil {
 		t.Errorf("unexpected error on request: %v", err)
