@@ -66,6 +66,7 @@ const testRequest = `{
         "Host":"1234567890.execute-api.us-east-1.amazonaws.com",
         "X-Forwarded-Proto":"https",
         "X-Amz-Cf-Id":"cDehVQoZnx43VYQb9j2-nvCh-9z396Uhbp027Y2JvkCPNLmGJHqlaA==",
+        "X-Amz-Trace-Id":"Root=1-5759e988-bd862e3fe1be46a994272793;Sampled=1",
         "CloudFront-Is-Tablet-Viewer":"false",
         "Cache-Control":"max-age=0",
         "User-Agent":"Custom User Agent String",
