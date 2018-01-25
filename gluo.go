@@ -1,6 +1,7 @@
 package gluo
 
 import (
+	"context"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"net/http"
@@ -13,12 +14,14 @@ func IsLambda() bool {
 	return ok
 }
 
-type lambdaAdapter struct {
+// LambdaAdapter allows to wrap a http.Handler for working on AWS Lambda.
+type LambdaAdapter struct {
 	http.Handler
 }
 
-func (la lambdaAdapter) Serve(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	req, err := request(event)
+// Handle handles an AWS Lambda request, converting an APIGatewayProxyRequest into a http.Request.
+func (la LambdaAdapter) Handle(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	req, err := request(ctx, event)
 	if err != nil {
 		return events.APIGatewayProxyResponse{}, err
 	}
@@ -61,8 +64,8 @@ func ListenAndServe(addr string, handler http.Handler) error {
 		handler = http.DefaultServeMux
 	}
 	if IsLambda() {
-		adapter := lambdaAdapter{handler}
-		lambda.Start(adapter.Serve)
+		adapter := LambdaAdapter{handler}
+		lambda.Start(adapter.Handle)
 		return nil
 	}
 	return http.ListenAndServe(addr, handler)

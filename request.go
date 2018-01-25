@@ -1,6 +1,7 @@
 package gluo
 
 import (
+	"context"
 	"encoding/base64"
 	"github.com/aws/aws-lambda-go/events"
 	"io"
@@ -32,7 +33,7 @@ func getBodyReader(event events.APIGatewayProxyRequest) (io.Reader, error) {
 	return body, nil
 }
 
-func request(event events.APIGatewayProxyRequest) (*http.Request, error) {
+func request(ctx context.Context, event events.APIGatewayProxyRequest) (*http.Request, error) {
 	body, err := getBodyReader(event)
 	if err != nil {
 		return nil, err
@@ -41,6 +42,7 @@ func request(event events.APIGatewayProxyRequest) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	req.Header = http.Header{}
 	for name, value := range event.Headers {
 		req.Header.Add(name, value)
