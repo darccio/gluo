@@ -3,6 +3,7 @@ package gluo
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"io"
 	"net/http"
@@ -52,6 +53,10 @@ func request(ctx context.Context, event events.APIGatewayProxyRequest) (*http.Re
 	}
 	req.Header.Set("X-Request-ID", event.RequestContext.RequestID)
 	req.Header.Set("X-Stage", event.RequestContext.Stage)
+	// AWS X-Ray
+	if traceID := ctx.Value("X-Amzn-Trace-ID"); traceID != nil {
+		req.Header.Set("X-Amzn-Trace-ID", fmt.Sprintf("%v", traceID))
+	}
 	req.RemoteAddr = event.RequestContext.Identity.SourceIP
 	return req, nil
 }
