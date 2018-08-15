@@ -2,10 +2,11 @@ package gluo
 
 import (
 	"context"
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 	"net/http"
 	"os"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
 // IsLambda checks if it is running on AWS Lambda.
@@ -69,4 +70,21 @@ func ListenAndServe(addr string, handler http.Handler) error {
 		return nil
 	}
 	return http.ListenAndServe(addr, handler)
+}
+
+// ListenAndServeTLS acts identically to ListenAndServe, except that it
+// expects HTTPS connections. Additionally, files containing a certificate and
+// matching private key for the server must be provided. If the certificate
+// is signed by a certificate authority, the certFile should be the concatenation
+// of the server's certificate, any intermediates, and the CA's certificate.
+func ListenAndServeTLS(addr string, certFile, keyFile string, handler http.Handler) error {
+	if handler == nil {
+		handler = http.DefaultServeMux
+	}
+	if IsLambda() {
+		adapter := LambdaAdapter{handler}
+		lambda.Start(adapter.Handle)
+		return nil
+	}
+	return http.ListenAndServeTLS(addr, certFile, keyFile, handler)
 }
